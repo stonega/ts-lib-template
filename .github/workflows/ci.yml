@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+
+      - name: Setup
+        run: npm i -g pnpm
+
+      - name: Install
+        run: pnpm install
+
+      - name: Lint
+        run: pnpm lint
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+
+      - name: Setup
+        run: npm i -g pnpm
+
+      - name: Install
+        run: pnpm install
+      
+      - name: Add config
+        run: echo $RPC_CONFIG > rpc.config.json
+        env:
+          RPC_CONFIG: ${{ secrets.RPC_CONFIG }}
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+  test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        node: [14.x, 16.x]
+        os: [ubuntu-latest]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set node ${{ matrix.node }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Setup
+        run: npm i -g pnpm
+
+      - name: Install
+        run: pnpm install
+      
+      - name: Add config
+        run: echo $RPC_CONFIG > rpc.config.json
+        env:
+          RPC_CONFIG: ${{ secrets.RPC_CONFIG }}
+
+      - name: Build
+        run: pnpm build
+
+      - name: Test
+        run: pnpm test
